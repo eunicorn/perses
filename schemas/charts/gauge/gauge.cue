@@ -11,11 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gauge
+package pkg
 
 import (
 	"github.com/perses/perses/schemas/common"
-	"github.com/perses/perses/schemas/common/prometheus"
 )
 
 #panel: {
@@ -24,7 +23,7 @@ import (
 		name: string
 	}
 	options: {
-		query:       prometheus.#query
+		query:       #query
 		calculation: common.#calculation
 		unit?:       common.#unit
 		thresholds?: common.#thresholds

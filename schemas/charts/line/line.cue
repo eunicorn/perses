@@ -11,11 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package line
-
-import (
-	"github.com/perses/perses/schemas/common/prometheus"
-)
+package pkg
 
 #panel: {
 	kind: "LineChart"
@@ -23,7 +19,7 @@ import (
 		name: string
 	}
 	options: {
-		queries: [...prometheus.#query]
+		queries: [...#query]
 		show_legend?: bool
 	}
 }

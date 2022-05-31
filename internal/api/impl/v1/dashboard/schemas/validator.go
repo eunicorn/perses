@@ -150,9 +150,10 @@ func (v *validator) LoadSchemas() {
 		}
 
 		schemaPath := filepath.Join(chartsPath, chart.Name())
-		var schemaFiles []string
 
-		// Add all the chart's cue files
+		// building of the list of CUE files to consider to build the schema
+		var schemaFiles []string
+		// - first, add all the chart's cue files
 		err := filepath.Walk(schemaPath, func(path string, info os.FileInfo, err error) error {
 			if filepath.Ext(path) == ".cue" {
 				schemaFiles = append(schemaFiles, path)
@@ -163,11 +164,24 @@ func (v *validator) LoadSchemas() {
 			logrus.WithError(err).Errorf("Not able to retrieve the chart's schema files from dir %s", schemaPath)
 			continue
 		}
+		// - then, add all the known query types
+		queriesPath := filepath.Join(v.schemasConf.Path, v.schemasConf.QueriesFolder)
+		err = filepath.Walk(queriesPath, func(path string, info os.FileInfo, err error) error {
+			if filepath.Ext(path) == ".cue" {
+				logrus.Warningf("path = %s", path)
+				schemaFiles = append(schemaFiles, path)
+			}
+			return nil
+		})
+		if err != nil {
+			logrus.WithError(err).Errorf("Not able to retrieve the query's schema files from dir %s", queriesPath)
+			continue
+		}
 
-		// load the cue files into build.Instances slice
-		buildInstances := load.Instances(schemaFiles, nil)
+		// build the Instance from the list of files
 		// we strongly assume that only 1 buildInstance should be returned (corresponding to the main definition like #panel), otherwise we skip it
 		// TODO can probably be improved
+		buildInstances := load.Instances(schemaFiles, nil)
 		if len(buildInstances) != 1 {
 			logrus.Errorf("The number of build instances for %s is != 1, skipping this chart", schemaPath)
 			continue
