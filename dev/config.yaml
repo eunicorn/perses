@@ -9,4 +9,5 @@ database:
 schemas:
   path: "schemas"
   charts_folder: "charts"
+  queries_folder: "queries"
   interval: "5m"
