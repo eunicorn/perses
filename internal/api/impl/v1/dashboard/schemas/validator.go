@@ -127,64 +127,77 @@ func (v *validator) Validate(panels map[string]json.RawMessage) error {
 
 // LoadSchemas load the known list of schemas into the validator
 func (v *validator) LoadSchemas() {
-	pluginsPath := filepath.Join(v.schemasConf.Path, v.schemasConf.ChartsFolder)
+	chartsPath := filepath.Join(v.schemasConf.Path, v.schemasConf.ChartsFolder)
 
-	files, err := os.ReadDir(pluginsPath)
+	charts, err := os.ReadDir(chartsPath)
 	if err != nil {
-		logrus.WithError(err).Errorf("Not able to read from schemas dir %s", pluginsPath)
+		logrus.WithError(err).Errorf("Not able to read from charts dir %s", chartsPath)
 		return
 	}
 
-	// remove any previous item before proceeding
+	// reset the validator's schemas list before proceeding
 	v.schemas.Range(func(key interface{}, value interface{}) bool {
 		v.schemas.Delete(key)
 		return true
 	})
 
-	// process each schema plugin to convert it into a CUE Value
-	// for each schema we check that it meets the default specs we expect for any panel, otherwise we dont include it
-	for _, file := range files {
-		if !file.IsDir() {
-			logrus.Warningf("Plugin %s is not a folder", file.Name())
+	// process each chart plugin to convert it into a CUE Value
+	// for each chart we check that its schema meets the default specs we expect for any chart, otherwise we dont include it
+	for _, chart := range charts {
+		if !chart.IsDir() {
+			logrus.Warningf("Chart plugin %s is not a folder", chart.Name())
 			continue
 		}
 
-		schemaPath := filepath.Join(pluginsPath, file.Name())
+		schemaPath := filepath.Join(chartsPath, chart.Name())
+		var schemaFiles []string
+
+		// Add all the chart's cue files
+		err := filepath.Walk(schemaPath, func(path string, info os.FileInfo, err error) error {
+			if filepath.Ext(path) == ".cue" {
+				schemaFiles = append(schemaFiles, path)
+			}
+			return nil
+		})
+		if err != nil {
+			logrus.WithError(err).Errorf("Not able to retrieve the chart's schema files from dir %s", schemaPath)
+			continue
+		}
 
 		// load the cue files into build.Instances slice
-		buildInstances := load.Instances([]string{}, &load.Config{Dir: schemaPath})
+		buildInstances := load.Instances(schemaFiles, nil)
 		// we strongly assume that only 1 buildInstance should be returned (corresponding to the main definition like #panel), otherwise we skip it
 		// TODO can probably be improved
 		if len(buildInstances) != 1 {
-			logrus.Errorf("The number of build instances for %s is != 1, skipping this schema", schemaPath)
+			logrus.Errorf("The number of build instances for %s is != 1, skipping this chart", schemaPath)
 			continue
 		}
 		buildInstance := buildInstances[0]
 
 		// check for errors on the instances (these are typically parsing errors)
 		if buildInstance.Err != nil {
-			logrus.WithError(buildInstance.Err).Errorf("Error retrieving schema for %s, skipping this schema", schemaPath)
+			logrus.WithError(buildInstance.Err).Errorf("Error retrieving schema for %s, skipping this chart", schemaPath)
 			continue
 		}
 
 		// build Value from the Instance
 		schema := v.context.BuildInstance(buildInstance)
 		if schema.Err() != nil {
-			logrus.WithError(schema.Err()).Errorf("Error during build for %s, skipping this schema", schemaPath)
+			logrus.WithError(schema.Err()).Errorf("Error during build for %s, skipping this chart", schemaPath)
 			continue
 		}
 
-		// check if the schema fulfils the base panel requirements
+		// check if the chart's schema fulfils the base chart requirements
 		unified := v.baseDef.Unify(schema)
 		if unified.Err() != nil {
-			logrus.WithError(unified.Err()).Errorf("Error during schema validation for %s, skipping this schema", schemaPath)
+			logrus.WithError(unified.Err()).Errorf("Error during schema validation for %s, skipping this chart", schemaPath)
 			continue
 		}
 
 		// check if another schema for the same Kind was already registered
 		kind, _ := schema.LookupPath(cue.ParsePath("kind")).String()
 		if _, ok := v.schemas.Load(kind); ok {
-			logrus.Errorf("Conflict caused by %s: a schema already exists for kind %s, skipping this schema", schemaPath, kind)
+			logrus.Errorf("Conflict caused by %s: a schema already exists for kind %s, skipping this chart", schemaPath, kind)
 			continue
 		}
 
