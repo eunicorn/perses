@@ -42,13 +42,13 @@ type validator struct {
 
 // base CUE definition that all charts & panels should meet
 const baseChartDef = `
-{
+#panel: close({
 	kind: string
 	display: {
 		name: string
 	}
 	options: _
-}
+})
 `
 
 // NewValidator instantiate a validator
