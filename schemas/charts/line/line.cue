@@ -27,3 +27,5 @@ package pkg
 		show_legend?: bool
 	}
 }
+
+#query: _ // needed for make cue-test only

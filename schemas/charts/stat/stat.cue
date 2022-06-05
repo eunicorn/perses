@@ -42,3 +42,5 @@ import (
 	area_color?:   string
 	area_opacity?: number
 }
+
+#query: _ // needed for make cue-test only

@@ -57,6 +57,9 @@ package pkg
 //   }
 // }
 
+#datasources: {...} // needed for make cue-eval only
+#panel: {...}       // needed for make cue-eval only
+
 or([for _, datasource in #datasources {
   #datasource: {
     kind: datasource.kind

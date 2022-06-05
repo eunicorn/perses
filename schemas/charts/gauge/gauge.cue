@@ -33,3 +33,5 @@ import (
 		thresholds?: common.#thresholds
 	}
 }
+
+#query: _ // needed for make cue-test only
