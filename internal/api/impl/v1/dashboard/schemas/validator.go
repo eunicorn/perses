@@ -139,36 +139,26 @@ func (v *validator) LoadSchemas() {
 			continue
 		}
 
-		// schemaFiles will be the list of CUE files to consider to build the final schema
+		// schemaFiles will be the list of all CUE files to consider to build the final chart schema
 		var schemaFiles []string
+		schemaPath := filepath.Join(chartsPath, chart.Name())
 		// - first, put the base chart def
 		schemaFiles = append(schemaFiles, filepath.Join(v.schemasConf.Path, baseDefFile))
-		// - then, add all the CUE files from this chart
-		schemaPath := filepath.Join(chartsPath, chart.Name())
-		err := filepath.Walk(schemaPath, func(path string, info os.FileInfo, err error) error {
-			if filepath.Ext(path) == ".cue" {
-				schemaFiles = append(schemaFiles, path)
-				logrus.Tracef("%s registered in schema files list", path)
-			}
-			return nil
-		})
+		// - then, retrieve & add all the CUE files from this chart
+		chartFiles, err := listCueFiles(schemaPath)
 		if err != nil {
-			logrus.WithError(err).Errorf("Not able to retrieve the chart's schema files from dir %s", schemaPath)
+			logrus.WithError(err).Errorf("Not able to retrieve the chart's CUE files from dir %s", schemaPath)
 			continue
 		}
+		schemaFiles = append(schemaFiles, chartFiles...)
 		// - then, add all the query types available
 		queriesPath := filepath.Join(v.schemasConf.Path, v.schemasConf.QueriesFolder)
-		err = filepath.Walk(queriesPath, func(path string, info os.FileInfo, err error) error {
-			if filepath.Ext(path) == ".cue" {
-				schemaFiles = append(schemaFiles, path)
-				logrus.Tracef("%s registered in schema files list", path)
-			}
-			return nil
-		})
+		queriesFiles, err := listCueFiles(queriesPath)
 		if err != nil {
-			logrus.WithError(err).Errorf("Not able to retrieve the query's schema files from dir %s", queriesPath)
+			logrus.WithError(err).Errorf("Not able to retrieve the queries CUE files from dir %s", queriesPath)
 			continue
 		}
+		schemaFiles = append(schemaFiles, queriesFiles...)
 
 		// build the CUE Value from the files
 		schema, err := buildChartValueFromFiles(v.context, schemaFiles)
@@ -191,7 +181,7 @@ func (v *validator) LoadSchemas() {
 		}
 
 		// at this stage everything is fine, so we add the "generator" CUE file & rebuild the CUE Value, in order to
-		// generate the final panel def (ie disjunction with 1 alternative for each kind of datasource+query)
+		// generate the final panel def (i.e a disjunction with 1 alternative for each kind of datasource+query)
 		schemaFiles = append(schemaFiles, filepath.Join(v.schemasConf.Path, generatorFile))
 		schema, err = buildChartValueFromFiles(v.context, schemaFiles)
 		if err != nil {
@@ -204,6 +194,19 @@ func (v *validator) LoadSchemas() {
 	}
 
 	logrus.Info("Schemas list (re)loaded")
+}
+
+// listCueFiles retrieves the cue files available at the given location and return a list containing their paths
+func listCueFiles(path string) ([]string, error) {
+	var cueFiles []string
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".cue" {
+			cueFiles = append(cueFiles, path)
+			logrus.Tracef("%s registered in CUE files list", path)
+		}
+		return nil
+	})
+	return cueFiles, err
 }
 
 // buildChartValueFromFiles builds a CUE Value representing a chart, from the provided list of CUE files
