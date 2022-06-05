@@ -22,6 +22,10 @@ import (
 	display: {
 		name: string
 	}
+	datasource: {
+		kind: string
+		key?: string
+	}
 	options: {
 		query:       #query
 		calculation: common.#calculation
@@ -29,5 +33,3 @@ import (
 		thresholds?: common.#thresholds
 	}
 }
-
-#panel

@@ -15,6 +15,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/perses/common/app"
 	"github.com/perses/perses/internal/api/core"
@@ -63,7 +64,7 @@ func main() {
 	// enable hot reload of CUE schemas for dashboards validation:
 	// - watch for changes on the schemas folder
 	// - register a cron task to reload schemas every <interval>
-	watcher, reloader, err := schemas.NewHotReloaders(conf.Schemas.Path, serviceManager.GetDashboard().GetValidator())
+	watcher, reloader, err := schemas.NewHotReloaders(fmt.Sprintf("%s/%s", conf.Schemas.Path, conf.Schemas.ChartsFolder), serviceManager.GetDashboard().GetValidator())
 	if err != nil {
 		logrus.WithError(err).Fatal("unable to instantiate the tasks for hot reload of schemas")
 	}

@@ -11,18 +11,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package first
+package pkg
 
 #panel: {
   kind: "AwesomeChart",
 	display: {
 		name: string
 	}
+	datasource: {
+		kind: string
+		key?: string
+	}
 	options: {
     a: string,
     b: {
       c: [...#d]
     }
+		queries: [...#query]
   }
 }
 
@@ -30,5 +35,3 @@ package first
   e: string
   f?: string
 }
-
-#panel

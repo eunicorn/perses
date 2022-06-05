@@ -18,10 +18,12 @@ package pkg
 	display: {
 		name: string
 	}
+	datasource: {
+		kind: string
+		key?: string
+	}
 	options: {
 		queries: [...#query]
 		show_legend?: bool
 	}
 }
-
-#panel

@@ -13,25 +13,20 @@
 
 package pkg
 
-#panel: {
-  kind: "AverageChart",
-	display: {
-		name: string
-	}
-	datasource: {
-		kind: string
-		key?: string
-	}
-	options: {
-    a: string,
-    b: {
-      c?: bool
-      d: [...#e]
-    }
-		query: #query
-  }
+#panel: close({
+  kind: string
+  display: #display
+  datasource: #datasource
+  options: _
+})
+
+#display: {
+  name: string
 }
 
-#e: {
-  f: number
+#datasource: {
+  kind: string
+  key?: string
 }
+
+#query: _

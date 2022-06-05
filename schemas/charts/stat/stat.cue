@@ -17,18 +17,14 @@ import (
 	"github.com/perses/perses/schemas/common"
 )
 
-#sparkline: {
-	line_color?:   string
-	line_width?:   number
-	line_opacity?: number
-	area_color?:   string
-	area_opacity?: number
-}
-
 #panel: {
 	kind: "StatChart"
 	display: {
 		name: string
+	}
+	datasource: {
+		kind: string
+		key?: string
 	}
 	options: {
 		query:       #query
@@ -39,4 +35,10 @@ import (
 	}
 }
 
-#panel
+#sparkline: {
+	line_color?:   string
+	line_width?:   number
+	line_opacity?: number
+	area_color?:   string
+	area_opacity?: number
+}

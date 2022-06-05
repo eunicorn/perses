@@ -51,30 +51,15 @@ func TestValidateDashboard(t *testing.T) {
 					Duration:  model.Duration(6 * time.Hour),
 					Variables: nil,
 					Panels: map[string]json.RawMessage{
-						"MyLinePanel": []byte(`
-							{
-								"kind": "AverageChart",
-								"display": {
-									"name": "simple average chart",
-								},
-								"options": {
-									"a": "yes",
-									"b": {
-										"c": false,
-										"d": [
-											{
-												"f": 66
-											}
-										]
-									}
-								}
-							}
-						`),
-						"MyBarPanel": []byte(`
+						"MyAwesomePanel": []byte(`
 							{
 								"kind": "AwesomeChart",
 								"display": {
 									"name": "simple awesome chart",
+								},
+								"datasource": {
+									"kind": "CustomDatasource",
+									"key": "MyCustomDatasource"
 								},
 								"options": {
 									"a": "yes",
@@ -85,6 +70,50 @@ func TestValidateDashboard(t *testing.T) {
 												"f": "the up metric"
 											}
 										]
+									},
+									queries: [
+										{
+											"kind": "CustomGraphQuery",
+											"options": {
+												"custom": true
+											}
+										},
+										{
+											"kind": "CustomGraphQuery",
+											"options": {
+												"custom": false
+											}
+										}
+									]
+								}
+							}
+						`),
+						"MyAveragePanel": []byte(`
+							{
+								"kind": "AverageChart",
+								"display": {
+									"name": "simple average chart",
+								},
+								"datasource": {
+									"kind": "SQLDatasource",
+								},
+								"options": {
+									"a": "yes",
+									"b": {
+										"c": false,
+										"d": [
+											{
+												"f": 66
+											}
+										]
+									},
+									query: {
+										"kind": "SQLGraphQuery",
+										"options": {
+											"select": "*"
+											"from": "TABLE"
+											"where": "ID > 0"
+										}
 									}
 								}
 							}
@@ -131,30 +160,15 @@ func TestValidateDashboard(t *testing.T) {
 					Duration:  model.Duration(6 * time.Hour),
 					Variables: nil,
 					Panels: map[string]json.RawMessage{
-						"MyAveragePanel": []byte(`
-							{
-								"kind": "AverageChart",
-								"display": {
-									"name": "simple average chart",
-								},
-								"options": {
-									"a": "yes",
-									"b": {
-										"c": false,
-										"d": [
-											{
-												"f": 66
-											}
-										]
-									}
-								}
-							}
-						`),
-						"MyAwesomePanel": []byte(`
+						"MyInvalidPanel": []byte(`
 							{
 								"kind": "AwesomeChart",
 								"display": {
 									"aaaaaa": "simple awesome chart",
+								},
+								"datasource": {
+									"kind": "CustomDatasource",
+									"key": "CustomGraphQuery"
 								},
 								"options": {
 									"a": "no",
@@ -165,6 +179,51 @@ func TestValidateDashboard(t *testing.T) {
 												"f": "the up metric"
 											}
 										]
+									},
+									queries: [
+										{
+											"kind": "CustomGraphQuery",
+											"options": {
+												"custom": true
+											}
+										},
+										{
+											"kind": "CustomGraphQuery",
+											"options": {
+												"custom": false
+											}
+										}
+									]
+								}
+							}
+						`),
+						"MyAveragePanel": []byte(`
+							{
+								"kind": "AverageChart",
+								"display": {
+									"name": "simple average chart",
+								},
+								"datasource": {
+									"kind": "SQLDatasource",
+									"key": "MySQLDatasource"
+								},
+								"options": {
+									"a": "yes",
+									"b": {
+										"c": false,
+										"d": [
+											{
+												"f": 66
+											}
+										]
+									},
+									query: {
+										"kind": "SQUALGraphQuery",
+										"options": {
+											"select": "*"
+											"from": "TABLE"
+											"where": "ID < 100"
+										}
 									}
 								}
 							}
@@ -191,14 +250,17 @@ func TestValidateDashboard(t *testing.T) {
 					},
 				},
 			},
-			result: "invalid panel MyAwesomePanel: AwesomeChart schema conditions not met: display: field not allowed: aaaaaa",
+
+			// TODO to be improved! bring back "invalid panel MyInvalidPanel: AwesomeChart schema conditions not met: display: field not allowed: aaaaaa"
+			result: "invalid panel MyInvalidPanel: AwesomeChart schema conditions not met: 1 errors in empty disjunction: (and 1 more errors)",
 		},
 	}
 	for _, test := range testSuite {
 		t.Run(test.title, func(t *testing.T) {
 			validator := NewValidator(config.Schemas{
-				Path:         "testdata",
-				ChartsFolder: "charts",
+				Path:          "testdata",
+				ChartsFolder:  "charts",
+				QueriesFolder: "queries",
 			})
 			validator.LoadSchemas()
 

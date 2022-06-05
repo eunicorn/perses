@@ -13,25 +13,11 @@
 
 package pkg
 
-#panel: {
-  kind: "AverageChart",
-	display: {
-		name: string
-	}
-	datasource: {
-		kind: string
-		key?: string
-	}
-	options: {
-    a: string,
-    b: {
-      c?: bool
-      d: [...#e]
-    }
-		query: #query
+or([for _, datasource in #datasources {
+  #datasource: {
+    kind: datasource.kind
   }
-}
+  #query: datasource.query
 
-#e: {
-  f: number
-}
+  #panel // inject the definition of #panel
+}])

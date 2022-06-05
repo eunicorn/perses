@@ -36,32 +36,22 @@ type Validator interface {
 type validator struct {
 	schemasConf config.Schemas
 	context     *cue.Context
-	baseDef     cue.Value
 	schemas     *sync.Map
 }
 
-// base CUE definition that all charts & panels should meet
-const baseChartDef = `
-#panel: close({
-	kind: string
-	display: {
-		name: string
-	}
-	options: _
-})
-`
+const (
+	baseDefFile   = "base.cue"
+	generatorFile = "generator.cue"
+	kindCuePath   = "#panel.kind"
+)
 
 // NewValidator instantiate a validator
 func NewValidator(conf config.Schemas) Validator {
 	ctx := cuecontext.New()
 
-	// compile the base chart definition
-	baseDef := ctx.CompileString(baseChartDef)
-
 	return &validator{
 		schemasConf: conf,
 		context:     ctx,
-		baseDef:     baseDef,
 		schemas:     &sync.Map{},
 	}
 }
@@ -91,7 +81,7 @@ func (v *validator) Validate(panels map[string]json.RawMessage) error {
 			break
 		}
 
-		// retrieve the corresponding schema
+		// retrieve the corresponding chart's schema
 		schema, ok := v.schemas.Load(kind)
 		if !ok {
 			err := fmt.Errorf("invalid panel %s: Unknown kind %s", k, kind)
@@ -101,7 +91,7 @@ func (v *validator) Validate(panels map[string]json.RawMessage) error {
 		}
 		logrus.Tracef("Matching panel %s against schema: %+v", k, schema)
 
-		// do the validation
+		// run the validation
 		unified := value.Unify(schema.(cue.Value))
 		opts := []cue.Option{
 			cue.Concrete(true),
@@ -149,14 +139,16 @@ func (v *validator) LoadSchemas() {
 			continue
 		}
 
-		schemaPath := filepath.Join(chartsPath, chart.Name())
-
-		// building of the list of CUE files to consider to build the schema
+		// schemaFiles will be the list of CUE files to consider to build the final schema
 		var schemaFiles []string
-		// - first, add all the chart's cue files
+		// - first, put the base chart def
+		schemaFiles = append(schemaFiles, filepath.Join(v.schemasConf.Path, baseDefFile))
+		// - then, add all the CUE files from this chart
+		schemaPath := filepath.Join(chartsPath, chart.Name())
 		err := filepath.Walk(schemaPath, func(path string, info os.FileInfo, err error) error {
 			if filepath.Ext(path) == ".cue" {
 				schemaFiles = append(schemaFiles, path)
+				logrus.Tracef("%s registered in schema files list", path)
 			}
 			return nil
 		})
@@ -164,12 +156,12 @@ func (v *validator) LoadSchemas() {
 			logrus.WithError(err).Errorf("Not able to retrieve the chart's schema files from dir %s", schemaPath)
 			continue
 		}
-		// - then, add all the known query types
+		// - then, add all the query types available
 		queriesPath := filepath.Join(v.schemasConf.Path, v.schemasConf.QueriesFolder)
 		err = filepath.Walk(queriesPath, func(path string, info os.FileInfo, err error) error {
 			if filepath.Ext(path) == ".cue" {
-				logrus.Warningf("path = %s", path)
 				schemaFiles = append(schemaFiles, path)
+				logrus.Tracef("%s registered in schema files list", path)
 			}
 			return nil
 		})
@@ -178,46 +170,65 @@ func (v *validator) LoadSchemas() {
 			continue
 		}
 
-		// build the Instance from the list of files
-		// we strongly assume that only 1 buildInstance should be returned (corresponding to the main definition like #panel), otherwise we skip it
-		// TODO can probably be improved
-		buildInstances := load.Instances(schemaFiles, nil)
-		if len(buildInstances) != 1 {
-			logrus.Errorf("The number of build instances for %s is != 1, skipping this chart", schemaPath)
-			continue
-		}
-		buildInstance := buildInstances[0]
-
-		// check for errors on the instances (these are typically parsing errors)
-		if buildInstance.Err != nil {
-			logrus.WithError(buildInstance.Err).Errorf("Error retrieving schema for %s, skipping this chart", schemaPath)
+		// build the CUE Value from the files
+		schema, err := buildChartValueFromFiles(v.context, schemaFiles)
+		if err != nil {
+			logrus.WithError(err).Errorf("Not able to build CUE Value for %s, skipping this chart", schemaPath)
 			continue
 		}
 
-		// build Value from the Instance
-		schema := v.context.BuildInstance(buildInstance)
-		if schema.Err() != nil {
-			logrus.WithError(schema.Err()).Errorf("Error during build for %s, skipping this chart", schemaPath)
+		// check if Kind is defined + if another schema for the same Kind was already registered
+		kind, _ := schema.LookupPath(cue.ParsePath(kindCuePath)).String()
+		if len(kind) == 0 {
+			logrus.Errorf("Expected %s property missing for %s, skipping this chart", kindCuePath, schemaPath)
+			logrus.Tracef("%+v", schema)
 			continue
 		}
-
-		// check if the chart's schema fulfils the base chart requirements
-		unified := v.baseDef.Unify(schema)
-		if unified.Err() != nil {
-			logrus.WithError(unified.Err()).Errorf("Error during schema validation for %s, skipping this chart", schemaPath)
-			continue
-		}
-
-		// check if another schema for the same Kind was already registered
-		kind, _ := schema.LookupPath(cue.ParsePath("kind")).String()
 		if _, ok := v.schemas.Load(kind); ok {
 			logrus.Errorf("Conflict caused by %s: a schema already exists for kind %s, skipping this chart", schemaPath, kind)
+			logrus.Tracef("%+v", schema)
+			continue
+		}
+
+		// at this stage everything is fine, so we add the "generator" CUE file & rebuild the CUE Value, in order to
+		// generate the final panel def (ie disjunction with 1 alternative for each kind of datasource+query)
+		schemaFiles = append(schemaFiles, filepath.Join(v.schemasConf.Path, generatorFile))
+		schema, err = buildChartValueFromFiles(v.context, schemaFiles)
+		if err != nil {
+			logrus.WithError(err).Errorf("Not able to use the generator for %s, skipping this chart", schemaPath)
 			continue
 		}
 
 		v.schemas.Store(kind, schema)
-		logrus.Debugf("Loaded schema %s from file %s: %+v", kind, schemaPath, schema)
+		logrus.Debugf("Loaded schema %s from dir %s: %+v", kind, schemaPath, schema)
 	}
 
 	logrus.Info("Schemas list (re)loaded")
+}
+
+// buildChartValueFromFiles builds a CUE Value representing a chart, from the provided list of CUE files
+func buildChartValueFromFiles(context *cue.Context, schemaFiles []string) (cue.Value, error) {
+	schema := cue.Value{}
+	// build the Instance from the list of files
+	// we strongly assume that only 1 buildInstance should be returned (corresponding to the main definition like #panel), otherwise we skip it
+	logrus.Tracef("schema files: %s", schemaFiles)
+	buildInstances := load.Instances(schemaFiles, nil)
+	if len(buildInstances) != 1 {
+		err := fmt.Errorf("the number of build instances is != 1")
+		return schema, err
+	}
+	buildInstance := buildInstances[0]
+
+	// check for errors on the instances (these are typically parsing errors)
+	if buildInstance.Err != nil {
+		return schema, buildInstance.Err
+	}
+
+	// build Value from the Instance
+	schema = context.BuildInstance(buildInstance)
+	if schema.Err() != nil {
+		return schema, schema.Err()
+	}
+
+	return schema, nil
 }
