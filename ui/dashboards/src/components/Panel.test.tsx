@@ -43,7 +43,7 @@ describe('Panel', () => {
 
     renderWithContext(
       <PluginRegistry {...pluginRegistryProps}>
-        <Panel definition={TEST_DEFINITION} />
+        <Panel definition={TEST_DEFINITION} id={'1'} x={1} y={1} />
       </PluginRegistry>
     );
   };

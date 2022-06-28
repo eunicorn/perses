@@ -29,6 +29,7 @@ export interface GridDefinition {
 }
 
 export interface GridItemDefinition {
+  id: string;
   x: number;
   y: number;
   width: number;

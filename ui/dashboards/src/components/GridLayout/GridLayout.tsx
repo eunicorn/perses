@@ -15,6 +15,11 @@ import { useState } from 'react';
 import { Box, BoxProps, Collapse } from '@mui/material';
 import { GridDefinition, GridItemDefinition } from '@perses-dev/core';
 import { GridTitle } from './GridTitle';
+import { Droppable } from '../Droppable';
+import { SortableItem } from '../SortableItem';
+import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
+import { arrayMove, SortableContext } from '@dnd-kit/sortable';
+import { render } from '@testing-library/react';
 
 const COLUMNS = 24;
 
@@ -35,13 +40,22 @@ export function GridLayout(props: GridLayoutProps) {
 
   const [isOpen, setIsOpen] = useState(spec.display?.collapse?.open ?? true);
 
+  console.log(spec.items);
+
   const gridItems: React.ReactNode[] = [];
   let mobileRowStart = 1;
 
-  spec.items.forEach((item, idx) => {
+  // const sortItems: string[] = [];
+  const [activeId, setActiveId] = useState(null);
+  const [sortItems, setItems] = useState(spec.items);
+
+  sortItems.forEach((item, idx) => {
+    // spec.items.indexOf()
     // Try to maintain the chart's aspect ratio on mobile
     const widthScale = COLUMNS / item.width;
     const mobileRows = Math.floor(item.height * widthScale);
+
+    console.log('item', item);
 
     gridItems.push(
       <Box
@@ -59,10 +73,51 @@ export function GridLayout(props: GridLayoutProps) {
       >
         {renderGridItemContent(item)}
       </Box>
+      // <>{renderGridItemContent(item)}</>
     );
 
     mobileRowStart += mobileRows;
   });
+
+  const handleDragStart = (event: any) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragOver = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleDragEnd = (event: any) => {
+    setActiveId(null);
+    const { active, over } = event;
+
+    console.log('event', event);
+
+    // if (active.id !== over.id) {
+    //   setItems((items) => {
+    //     // console.log('items', items);
+    //     const oldIndex = items.findIndex((item) => item.id === active.id);
+    //     // console.log('oldIndex', oldIndex);
+    //     const newIndex = items.findIndex((item) => item.id === over.id);
+    //     // console.log('newIndex', newIndex);
+
+    //     const newItems = arrayMove(items, oldIndex, newIndex);
+    //     console.log('newItems', newItems);
+    //     return newItems;
+    //   });
+    // }
+  };
+
+  const items = sortItems.map((item) => item.id!);
 
   return (
     <Box {...others} component="section" sx={{ '& + &': { marginTop: (theme) => theme.spacing(1) } }}>
@@ -77,21 +132,49 @@ export function GridLayout(props: GridLayoutProps) {
         />
       )}
       <Collapse in={isOpen} unmountOnExit>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`,
-            gridAutoRows: {
-              xs: 24,
-              sm: 36,
-            },
-            columnGap: (theme) => theme.spacing(1),
-            rowGap: (theme) => theme.spacing(1),
-          }}
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
         >
-          {gridItems}
-        </Box>
+          <SortableContext items={items} strategy={disableSortingStrategy}>
+            <Box
+              data-automation-id={'ROW'}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, // # of columns
+                gridAutoRows: {
+                  xs: 24,
+                  sm: 36,
+                },
+                columnGap: (theme) => theme.spacing(1),
+                rowGap: (theme) => theme.spacing(1),
+                // gridAutoRow: 'row dense',
+              }}
+            >
+              {gridItems}
+            </Box>
+          </SortableContext>
+          <DragOverlay adjustScale={false}>
+            {activeId ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridAutoColumns: 'auto',
+                  gridAutoRows: 'auto',
+                  height: '100%',
+                  backgroundColor: 'rgba(136,153,168,1.00)',
+                }}
+              ></div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </Collapse>
     </Box>
   );
+
+  function disableSortingStrategy() {
+    return null;
+  }
 }

@@ -13,11 +13,13 @@
 
 import { ErrorAlert } from '@perses-dev/components';
 import { DashboardSpec, GridItemDefinition, resolvePanelRef } from '@perses-dev/core';
+// import { Draggable } from '../Draggable';
 import { Panel } from '../Panel';
 
 export interface GridItemContentProps {
+  id: string;
   spec: DashboardSpec;
-  content: GridItemDefinition['content'];
+  content: GridItemDefinition;
 }
 
 /**
@@ -26,8 +28,8 @@ export interface GridItemContentProps {
 export function GridItemContent(props: GridItemContentProps) {
   const { content, spec } = props;
   try {
-    const definition = resolvePanelRef(spec, content);
-    return <Panel definition={definition} />;
+    const definition = resolvePanelRef(spec, content.content);
+    return <Panel id={props.id} definition={definition} x={content.x} y={content.y} />;
   } catch (err) {
     return <ErrorAlert error={err as Error} />;
   }

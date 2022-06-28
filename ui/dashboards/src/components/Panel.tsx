@@ -20,8 +20,14 @@ import { Box, Card, CardProps, CardHeader, CardContent, Typography } from '@mui/
 import InformationOutlineIcon from 'mdi-material-ui/InformationOutline';
 import useResizeObserver from 'use-resize-observer';
 
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 export interface PanelProps extends CardProps {
   definition: PanelDefinition;
+  id: string;
+  x: number;
+  y: number;
 }
 
 /**
@@ -40,68 +46,83 @@ export function Panel(props: PanelProps) {
     return { width, height };
   }, [width, height]);
 
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: props.id,
+    data: { x: props.x, y: props.y },
+  });
+
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+    height: '100%',
+  };
+
   return (
-    <Card
-      sx={{
-        ...others.sx,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexFlow: 'column nowrap',
-      }}
-      variant="outlined"
-      {...others}
-    >
-      <CardHeader
-        title={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              component="h2"
-              variant="body2"
-              fontWeight={(theme) => theme.typography.fontWeightMedium}
-              whiteSpace="nowrap"
-              overflow="hidden"
-              textOverflow="ellipsis"
-            >
-              {definition.display.name}
-            </Typography>
-            {definition.display.description && (
-              <InfoTooltip description={definition.display.description} placement={TooltipPlacement.Right}>
-                <InformationOutlineIcon
-                  sx={{ fontSize: '1rem', position: 'relative', left: '4px', cursor: 'pointer' }}
-                />
-              </InfoTooltip>
-            )}
-          </Box>
-        }
+    <div ref={setNodeRef} style={style}>
+      <Card
         sx={{
-          display: 'block',
-          padding: (theme) => theme.spacing(1, 2),
-          borderBottom: (theme) => `solid 1px ${theme.palette.divider}`,
+          ...others.sx,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexFlow: 'column nowrap',
         }}
-      />
-      <CardContent
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          flexGrow: 1,
-          padding: (theme) => theme.spacing(panelPadding),
-          // Override MUI default style for last-child
-          ':last-child': {
-            padding: (theme) => theme.spacing(panelPadding),
-          },
-        }}
-        ref={setContentElement}
+        variant="outlined"
+        {...others}
       >
-        <PluginBoundary loadingFallback="Loading..." ErrorFallbackComponent={ErrorAlert}>
-          <PanelComponent definition={definition} contentDimensions={contentDimensions} />
-        </PluginBoundary>
-      </CardContent>
-    </Card>
+        <div {...attributes} {...listeners}>
+          <CardHeader
+            title={
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  component="h2"
+                  variant="body2"
+                  fontWeight={(theme) => theme.typography.fontWeightMedium}
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                >
+                  {definition.display.name}
+                </Typography>
+                {definition.display.description && (
+                  <InfoTooltip description={definition.display.description} placement={TooltipPlacement.Right}>
+                    <InformationOutlineIcon
+                      sx={{ fontSize: '1rem', position: 'relative', left: '4px', cursor: 'pointer' }}
+                    />
+                  </InfoTooltip>
+                )}
+              </Box>
+            }
+            sx={{
+              display: 'block',
+              padding: (theme) => theme.spacing(1, 2),
+              borderBottom: (theme) => `solid 1px ${theme.palette.divider}`,
+            }}
+          />
+        </div>
+        <CardContent
+          sx={{
+            position: 'relative',
+            overflow: 'hidden',
+            flexGrow: 1,
+            padding: (theme) => theme.spacing(panelPadding),
+            // Override MUI default style for last-child
+            ':last-child': {
+              padding: (theme) => theme.spacing(panelPadding),
+            },
+          }}
+          ref={setContentElement}
+        >
+          <PluginBoundary loadingFallback="Loading..." ErrorFallbackComponent={ErrorAlert}>
+            <PanelComponent definition={definition} contentDimensions={contentDimensions} />
+          </PluginBoundary>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

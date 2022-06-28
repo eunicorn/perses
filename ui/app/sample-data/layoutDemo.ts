@@ -166,6 +166,7 @@ const nodeExporterDashboard: DashboardResource = {
           items: [
             // First Row
             {
+              id: 'a',
               x: 0,
               y: 0,
               width: 12,
@@ -181,6 +182,7 @@ const nodeExporterDashboard: DashboardResource = {
         spec: {
           items: [
             {
+              id: 'a',
               x: 8,
               y: 0,
               width: 8,
@@ -202,6 +204,7 @@ const nodeExporterDashboard: DashboardResource = {
           },
           items: [
             {
+              id: 'a',
               x: 0,
               y: 0,
               width: 6,
@@ -209,6 +212,7 @@ const nodeExporterDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/diskIO' },
             },
             {
+              id: 'b',
               x: 18,
               y: 0,
               width: 6,
