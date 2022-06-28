@@ -11,17 +11,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { useState } from 'react';
-import { Box, BoxProps, Collapse } from '@mui/material';
+import { useMemo, useState } from 'react';
+import { Box, BoxProps, Collapse, Grid } from '@mui/material';
 import { GridDefinition, GridItemDefinition } from '@perses-dev/core';
 import { GridTitle } from './GridTitle';
 import { Droppable } from '../Droppable';
 import { SortableItem } from '../SortableItem';
-import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
+import { closestCenter, DndContext, DragOverlay, Modifier } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
 import { render } from '@testing-library/react';
 
 const COLUMNS = 24;
+
+export function createSnapModifier(gridSize: number): Modifier {
+  return ({ transform }) => ({
+    ...transform,
+    x: Math.ceil(transform.x / gridSize) * gridSize,
+    y: Math.ceil(transform.y / gridSize) * gridSize,
+  });
+}
 
 export interface GridLayoutProps extends BoxProps {
   definition: GridDefinition;
@@ -32,6 +40,9 @@ export interface GridLayoutProps extends BoxProps {
  * Layout component that arranges children in a Grid based on the definition.
  */
 export function GridLayout(props: GridLayoutProps) {
+  const [gridSize, setGridSize] = useState(24);
+  const snapToGrid = useMemo(() => createSnapModifier(gridSize), [gridSize]);
+
   const {
     definition: { spec },
     renderGridItemContent,
@@ -40,7 +51,7 @@ export function GridLayout(props: GridLayoutProps) {
 
   const [isOpen, setIsOpen] = useState(spec.display?.collapse?.open ?? true);
 
-  console.log(spec.items);
+  // console.log(spec.items);
 
   const gridItems: React.ReactNode[] = [];
   let mobileRowStart = 1;
@@ -55,25 +66,27 @@ export function GridLayout(props: GridLayoutProps) {
     const widthScale = COLUMNS / item.width;
     const mobileRows = Math.floor(item.height * widthScale);
 
-    console.log('item', item);
+    // console.log('item', item);
 
     gridItems.push(
-      <Box
-        key={idx}
-        sx={{
-          gridColumn: {
-            xs: `1 / span ${COLUMNS}`,
-            sm: `${item.x + 1} / span ${item.width}`,
-          },
-          gridRow: {
-            xs: `${mobileRowStart} / span ${mobileRows}`,
-            sm: `${item.y + 1} / span ${item.height}`,
-          },
-        }}
-      >
-        {renderGridItemContent(item)}
-      </Box>
-      // <>{renderGridItemContent(item)}</>
+      // <Box
+      //   key={idx}
+      //   sx={{
+      //     gridColumn: {
+      //       xs: `1 / span ${COLUMNS}`,
+      //       sm: `${item.x + 1} / span ${item.width}`,
+      //     },
+      //     gridRow: {
+      //       xs: `${mobileRowStart} / span ${mobileRows}`,
+      //       sm: `${item.y + 1} / span ${item.height}`,
+      //     },
+      //   }}
+      // >
+      //   {renderGridItemContent(item)}
+      // </Box>
+      <Grid item xs={item.width}>
+        <>{renderGridItemContent(item)}</>
+      </Grid>
     );
 
     mobileRowStart += mobileRows;
@@ -84,23 +97,32 @@ export function GridLayout(props: GridLayoutProps) {
   };
 
   const handleDragOver = (event: any) => {
-    const { active, over } = event;
+    const { active, over, collisions } = event;
+
+    // console.log('event', event);
 
     if (active.id !== over.id) {
       setItems((items) => {
+        // console.log('items', items);
         const oldIndex = items.findIndex((item) => item.id === active.id);
+        // console.log('oldIndex', oldIndex);
         const newIndex = items.findIndex((item) => item.id === over.id);
+        // console.log('newIndex', newIndex);
 
-        return arrayMove(items, oldIndex, newIndex);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        // console.log('newItems', newItems);
+        return newItems;
       });
     }
   };
 
   const handleDragEnd = (event: any) => {
     setActiveId(null);
-    const { active, over } = event;
+    // const { active, over, collisions } = event;
 
-    console.log('event', event);
+    // console.log('event', event);
+
+    // const newItem = collisions[collisions.length - 1].data.droppableContainer.data.current;
 
     // if (active.id !== over.id) {
     //   setItems((items) => {
@@ -137,9 +159,10 @@ export function GridLayout(props: GridLayoutProps) {
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
+          // modifiers={[snapToGrid]}
         >
           <SortableContext items={items} strategy={disableSortingStrategy}>
-            <Box
+            {/* <Box
               data-automation-id={'ROW'}
               sx={{
                 display: 'grid',
@@ -150,13 +173,16 @@ export function GridLayout(props: GridLayoutProps) {
                 },
                 columnGap: (theme) => theme.spacing(1),
                 rowGap: (theme) => theme.spacing(1),
-                // gridAutoRow: 'row dense',
+                gridAutoFlow: 'row',
               }}
             >
               {gridItems}
-            </Box>
+            </Box> */}
+            <Grid container spacing={2} columns={COLUMNS}>
+              {gridItems}
+            </Grid>
           </SortableContext>
-          <DragOverlay adjustScale={false}>
+          {/* <DragOverlay adjustScale={false}>
             {activeId ? (
               <div
                 style={{
@@ -167,8 +193,8 @@ export function GridLayout(props: GridLayoutProps) {
                   backgroundColor: 'rgba(136,153,168,1.00)',
                 }}
               ></div>
-            ) : null}
-          </DragOverlay>
+            ) : null} */}
+          {/* </DragOverlay> */}
         </DndContext>
       </Collapse>
     </Box>

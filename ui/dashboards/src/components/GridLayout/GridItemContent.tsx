@@ -12,6 +12,7 @@
 // limitations under the License.
 
 import { ErrorAlert } from '@perses-dev/components';
+import { Box, BoxProps, Collapse } from '@mui/material';
 import { DashboardSpec, GridItemDefinition, resolvePanelRef } from '@perses-dev/core';
 // import { Draggable } from '../Draggable';
 import { Panel } from '../Panel';
@@ -29,7 +30,11 @@ export function GridItemContent(props: GridItemContentProps) {
   const { content, spec } = props;
   try {
     const definition = resolvePanelRef(spec, content.content);
-    return <Panel id={props.id} definition={definition} x={content.x} y={content.y} />;
+    return (
+      <Box height={content.height * 40}>
+        <Panel id={props.id} definition={definition} x={content.x} y={content.y} />
+      </Box>
+    );
   } catch (err) {
     return <ErrorAlert error={err as Error} />;
   }

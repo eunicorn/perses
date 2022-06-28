@@ -119,6 +119,38 @@ const benchmarkDashboard: DashboardResource = {
           unit: { kind: 'Percent' },
         },
       },
+      basicEx2: {
+        kind: 'LineChart',
+        display: { name: 'Sample A' },
+        options: {
+          queries: [
+            {
+              kind: 'PrometheusGraphQuery',
+              options: {
+                query:
+                  '1 - node_filesystem_free_bytes{job="node",instance="$instance",fstype!="rootfs",mountpoint!~"/(run|var).*",mountpoint!=""} / node_filesystem_size_bytes{job="node",instance="$instance"}',
+              },
+            },
+          ],
+          unit: { kind: 'Percent' },
+        },
+      },
+      basicEx3: {
+        kind: 'LineChart',
+        display: { name: 'Sample B' },
+        options: {
+          queries: [
+            {
+              kind: 'PrometheusGraphQuery',
+              options: {
+                query:
+                  '1 - node_filesystem_free_bytes{job="node",instance="$instance",fstype!="rootfs",mountpoint!~"/(run|var).*",mountpoint!=""} / node_filesystem_size_bytes{job="node",instance="$instance"}',
+              },
+            },
+          ],
+          unit: { kind: 'Percent' },
+        },
+      },
       multiQueries: {
         kind: 'LineChart',
         display: { name: 'Multi Queries' },
@@ -195,7 +227,6 @@ const benchmarkDashboard: DashboardResource = {
         kind: 'StatChart',
         display: {
           name: 'Stat Sm',
-          description: 'This is a stat chart'
         },
         options: {
           query: {
@@ -221,7 +252,6 @@ const benchmarkDashboard: DashboardResource = {
         kind: 'StatChart',
         display: {
           name: 'RAM Used',
-          description: 'This is a stat chart'
         },
         options: {
           query: {
@@ -239,7 +269,6 @@ const benchmarkDashboard: DashboardResource = {
         kind: 'StatChart',
         display: {
           name: 'RAM Total',
-          description: 'This is a stat chart',
         },
         options: {
           query: {
@@ -259,7 +288,6 @@ const benchmarkDashboard: DashboardResource = {
         kind: 'StatChart',
         display: {
           name: 'Stat Md',
-          description: 'This is a stat chart',
         },
         options: {
           query: {
@@ -380,6 +408,22 @@ const benchmarkDashboard: DashboardResource = {
               width: 12,
               height: 6,
               content: { $ref: '#/spec/panels/basicEx' },
+            },
+            {
+              id: 'c',
+              x: 12,
+              y: 0,
+              width: 12,
+              height: 6,
+              content: { $ref: '#/spec/panels/basicEx2' },
+            },
+            {
+              id: 'd',
+              x: 12,
+              y: 0,
+              width: 12,
+              height: 6,
+              content: { $ref: '#/spec/panels/basicEx3' },
             },
           ],
         },
