@@ -10,13 +10,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
 import { useState } from 'react';
+import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Box, BoxProps, Collapse } from '@mui/material';
 import { GridDefinition, GridItemDefinition } from '@perses-dev/core';
 import { GridTitle } from './GridTitle';
 
 const COLUMNS = 24;
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export interface GridLayoutProps extends BoxProps {
   definition: GridDefinition;
@@ -38,27 +43,37 @@ export function GridLayout(props: GridLayoutProps) {
   const gridItems: React.ReactNode[] = [];
   let mobileRowStart = 1;
 
+  const handleResize = (resize: any) => {
+    console.log('resize', resize);
+  };
+
   spec.items.forEach((item, idx) => {
     // Try to maintain the chart's aspect ratio on mobile
     const widthScale = COLUMNS / item.width;
     const mobileRows = Math.floor(item.height * widthScale);
 
+    console.log('item', item);
+    const { x, y, width, height, id } = item;
+
     gridItems.push(
-      <Box
-        key={idx}
-        sx={{
-          gridColumn: {
-            xs: `1 / span ${COLUMNS}`,
-            sm: `${item.x + 1} / span ${item.width}`,
-          },
-          gridRow: {
-            xs: `${mobileRowStart} / span ${mobileRows}`,
-            sm: `${item.y + 1} / span ${item.height}`,
-          },
-        }}
-      >
+      // <Box
+      //   key={idx}
+      //   sx={{
+      //     gridColumn: {
+      //       xs: `1 / span ${COLUMNS}`,
+      //       sm: `${item.x + 1} / span ${item.width}`,
+      //     },
+      //     gridRow: {
+      //       xs: `${mobileRowStart} / span ${mobileRows}`,
+      //       sm: `${item.y + 1} / span ${item.height}`,
+      //     },
+      //   }}
+      // >
+      //   {renderGridItemContent(item)}
+      // </Box>
+      <div key={id} data-grid={{ x, y, w: width, h: height }}>
         {renderGridItemContent(item)}
-      </Box>
+      </div>
     );
 
     mobileRowStart += mobileRows;
@@ -77,7 +92,7 @@ export function GridLayout(props: GridLayoutProps) {
         />
       )}
       <Collapse in={isOpen} unmountOnExit>
-        <Box
+        {/* <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`,
@@ -90,7 +105,19 @@ export function GridLayout(props: GridLayoutProps) {
           }}
         >
           {gridItems}
-        </Box>
+        </Box> */}
+        <ResponsiveGridLayout
+          className="layout"
+          // layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 24, md: 24, sm: 24, xs: 24, xxs: 12 }}
+          resizeHandles={['se']}
+          rowHeight={36}
+          measureBeforeMount={false}
+          onResizeStop={handleResize}
+        >
+          {gridItems}
+        </ResponsiveGridLayout>
       </Collapse>
     </Box>
   );

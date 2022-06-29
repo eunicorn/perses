@@ -363,6 +363,7 @@ const benchmarkDashboard: DashboardResource = {
           },
           items: [
             {
+              id: 'a',
               x: 0,
               y: 0,
               width: 12,
@@ -373,6 +374,23 @@ const benchmarkDashboard: DashboardResource = {
               // content: { $ref: '#/spec/panels/seriesTest' },
             },
             {
+              id: 'b',
+              x: 12,
+              y: 0,
+              width: 12,
+              height: 6,
+              content: { $ref: '#/spec/panels/basicEx' },
+            },
+            {
+              id: 'c',
+              x: 12,
+              y: 0,
+              width: 12,
+              height: 6,
+              content: { $ref: '#/spec/panels/basicEx' },
+            },
+            {
+              id: 'd',
               x: 12,
               y: 0,
               width: 12,
@@ -393,6 +411,7 @@ const benchmarkDashboard: DashboardResource = {
           },
           items: [
             {
+              id: 'a',
               x: 0,
               y: 0,
               width: 12,
@@ -401,6 +420,7 @@ const benchmarkDashboard: DashboardResource = {
               // content: { $ref: '#/spec/panels/seriesTestAlt' },
             },
             {
+              id: 'b',
               x: 12,
               y: 0,
               width: 12,
@@ -421,6 +441,7 @@ const benchmarkDashboard: DashboardResource = {
           },
           items: [
             {
+              id: 'a',
               x: 0,
               y: 0,
               width: 2,
@@ -428,6 +449,7 @@ const benchmarkDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/statSm' },
             },
             {
+              id: 'b',
               x: 0,
               y: 2,
               width: 2,
@@ -435,6 +457,7 @@ const benchmarkDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/statRAM' },
             },
             {
+              id: 'c',
               x: 0,
               y: 4,
               width: 2,
@@ -442,6 +465,7 @@ const benchmarkDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/statTotalRAM' },
             },
             {
+              id: 'd',
               x: 2,
               y: 0,
               width: 4,
@@ -449,6 +473,7 @@ const benchmarkDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/statMd' },
             },
             {
+              id: 'e',
               x: 6,
               y: 0,
               width: 10,
@@ -456,6 +481,7 @@ const benchmarkDashboard: DashboardResource = {
               content: { $ref: '#/spec/panels/statLg' },
             },
             {
+              id: 'f',
               x: 16,
               y: 0,
               width: 8,

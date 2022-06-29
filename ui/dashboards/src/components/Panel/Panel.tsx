@@ -27,12 +27,16 @@ export interface PanelProps extends CardProps {
  * Renders a PanelDefinition's content inside of a Card.
  */
 export function Panel(props: PanelProps) {
+  console.log('props', props);
   const { definition, ...others } = props;
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
   const isStatsChart = definition.kind === 'StatChart';
   const panelPadding = isStatsChart ? 0 : 2;
 
   const { width, height } = useResizeObserver({ ref: contentElement });
+
+  console.log('width', width);
+  console.log('height', height);
 
   const contentDimensions = useMemo(() => {
     if (width === undefined || height === undefined) return undefined;

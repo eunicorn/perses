@@ -88,6 +88,7 @@ export interface ZoomEventData {
 }
 
 interface LineChartProps {
+  width: number;
   height: number;
   data: EChartsDataFormat;
   grid?: GridComponentOption;
@@ -99,6 +100,7 @@ interface LineChartProps {
 }
 
 export function LineChart({
+  width,
   height,
   data,
   grid,
@@ -108,6 +110,7 @@ export function LineChart({
   dataZoomEnabled,
   onDataZoom,
 }: LineChartProps) {
+  console.log('Line Chart Height', height);
   const theme = useTheme();
   const chartRef = useRef<EChartsInstance>();
   const [showTooltip, setShowTooltip] = useState<boolean>(true);
@@ -269,6 +272,7 @@ export function LineChart({
   return (
     <Box
       sx={{
+        width,
         height,
       }}
       onMouseDown={handleOnMouseDown}
@@ -282,8 +286,8 @@ export function LineChart({
 
       <EChart
         sx={{
-          width: '100%',
-          height: '100%',
+          width,
+          height,
         }}
         option={option}
         onEvents={handleEvents}
