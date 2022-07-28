@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 // Copyright 2021 The Perses Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +14,7 @@
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-import { useState } from 'react';
+import { useState, forwardRef, useRef } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Box, BoxProps, Collapse } from '@mui/material';
 import { GridDefinition, GridItemDefinition } from '@perses-dev/core';
@@ -31,7 +32,7 @@ export interface GridLayoutProps extends BoxProps {
 /**
  * Layout component that arranges children in a Grid based on the definition.
  */
-export function GridLayout(props: GridLayoutProps) {
+export const GridLayout = forwardRef((props: GridLayoutProps) => {
   const {
     definition: { spec },
     renderGridItemContent,
@@ -43,9 +44,7 @@ export function GridLayout(props: GridLayoutProps) {
   const gridItems: React.ReactNode[] = [];
   let mobileRowStart = 1;
 
-  const handleResize = (resize: any) => {
-    console.log('resize', resize);
-  };
+  const gridRef = useRef();
 
   spec.items.forEach((item, idx) => {
     // Try to maintain the chart's aspect ratio on mobile
@@ -80,7 +79,7 @@ export function GridLayout(props: GridLayoutProps) {
   });
 
   return (
-    <Box {...others} component="section" sx={{ '& + &': { marginTop: (theme) => theme.spacing(1) } }}>
+    <Box ref={gridRef} {...others} component="section" sx={{ '& + &': { marginTop: (theme) => theme.spacing(1) } }}>
       {spec.display !== undefined && (
         <GridTitle
           title={spec.display.title}
@@ -114,11 +113,11 @@ export function GridLayout(props: GridLayoutProps) {
           resizeHandles={['se']}
           rowHeight={36}
           measureBeforeMount={false}
-          onResizeStop={handleResize}
+          draggableHandle={'.grid-drag-handle'}
         >
           {gridItems}
         </ResponsiveGridLayout>
       </Collapse>
     </Box>
   );
-}
+});

@@ -110,7 +110,6 @@ export function LineChart({
   dataZoomEnabled,
   onDataZoom,
 }: LineChartProps) {
-  console.log('Line Chart Height', height);
   const theme = useTheme();
   const chartRef = useRef<EChartsInstance>();
   const [showTooltip, setShowTooltip] = useState<boolean>(true);

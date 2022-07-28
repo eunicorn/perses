@@ -44,6 +44,7 @@ export function GridTitle(props: GridTitleProps) {
   // Otherwise render something clickable
   return (
     <ButtonBase
+      className={'grid-drag-handle'}
       component="header"
       sx={{
         display: 'flex',

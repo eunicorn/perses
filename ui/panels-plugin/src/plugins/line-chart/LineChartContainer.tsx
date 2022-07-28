@@ -114,6 +114,7 @@ export function LineChartContainer(props: LineChartContainerProps) {
 
   return (
     <LineChart
+      width={width}
       height={height}
       data={graphData}
       grid={gridOverrides}
