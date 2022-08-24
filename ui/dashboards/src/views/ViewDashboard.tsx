@@ -11,11 +11,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, BoxProps } from '@mui/material';
+import produce from 'immer';
+import { Box, BoxProps, Button } from '@mui/material';
 import { combineSx } from '@perses-dev/components';
 import { DashboardResource } from '@perses-dev/core';
+import PencilIcon from 'mdi-material-ui/PencilOutline';
+import AddIcon from 'mdi-material-ui/Plus';
 import { TimeRangeStateProvider, TemplateVariablesProvider } from '../context';
 import { Dashboard, VariableList } from '../components';
+import { usePanels, useEditMode, useLayouts } from '../context/store';
 
 export interface ViewDashboardProps extends BoxProps {
   dashboardResource: DashboardResource;
@@ -26,6 +30,36 @@ export interface ViewDashboardProps extends BoxProps {
  */
 export function ViewDashboard(props: ViewDashboardProps) {
   const { dashboardResource, sx, children, ...others } = props;
+
+  const { isEditMode, setEditMode } = useEditMode();
+  const { addPanel } = usePanels();
+  const { layouts, setLayouts } = useLayouts();
+
+  const onEditClick = () => {
+    setEditMode(true);
+  };
+
+  const onAddPanel = () => {
+    const newPanel = {
+      kind: 'EmptyChart',
+      display: {
+        name: 'New Panel',
+      },
+      options: {},
+    };
+    addPanel('newPanel', newPanel);
+    const newLayouts = produce(layouts, (draftState) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      draftState[0]!.spec.items.unshift({
+        x: 0,
+        y: 0,
+        height: 6,
+        width: 12,
+        content: { $ref: '#/spec/panels/newPanel' },
+      });
+    });
+    setLayouts(newLayouts);
+  };
 
   return (
     <TimeRangeStateProvider initialValue={{ pastDuration: dashboardResource.spec.duration }}>
@@ -49,8 +83,32 @@ export function ViewDashboard(props: ViewDashboardProps) {
               flexGrow: 1,
               overflowX: 'hidden',
               overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
+            {isEditMode ? (
+              <Button
+                sx={{
+                  alignSelf: 'flex-end',
+                }}
+                onClick={onAddPanel}
+              >
+                <AddIcon sx={{ fontSize: '1rem', marginRight: '8px' }} />
+                Add Panel
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                sx={{
+                  alignSelf: 'flex-end',
+                }}
+                onClick={onEditClick}
+              >
+                <PencilIcon sx={{ fontSize: '1rem', marginRight: '8px' }} />
+                Edit
+              </Button>
+            )}
             <VariableList
               variables={dashboardResource.spec.variables}
               sx={{ margin: (theme) => theme.spacing(1, 0, 2) }}

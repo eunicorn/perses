@@ -19,6 +19,7 @@ import { ErrorAlert, InfoTooltip, TooltipPlacement } from '@perses-dev/component
 import { PanelDefinition } from '@perses-dev/core';
 import { Box, Card, CardProps, CardHeader, CardContent, Typography } from '@mui/material';
 import InformationOutlineIcon from 'mdi-material-ui/InformationOutline';
+import DragIcon from 'mdi-material-ui/Drag';
 
 export interface PanelProps extends CardProps {
   definition: PanelDefinition;
@@ -91,6 +92,7 @@ export function Panel(props: PanelProps) {
                 />
               </InfoTooltip>
             )}
+            <DragIcon className="drag-handle" sx={{ marginLeft: 'auto', cursor: 'grab' }} />
           </Box>
         }
         sx={{

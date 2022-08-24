@@ -11,9 +11,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Box, BoxProps } from '@mui/material';
+import { Box, BoxProps, Card } from '@mui/material';
 import { ErrorBoundary, ErrorAlert } from '@perses-dev/components';
-import { DashboardSpec } from '@perses-dev/core';
+import { DashboardSpec, GridItemDefinition } from '@perses-dev/core';
+import { useLayouts } from '../context/store';
 import { GridLayout, GridItemContent } from './GridLayout';
 
 export interface DashboardProps extends BoxProps {
@@ -26,15 +27,33 @@ export interface DashboardProps extends BoxProps {
 export function Dashboard(props: DashboardProps) {
   const { spec, ...others } = props;
 
+  const { layouts } = useLayouts();
+
+  const renderGridItemContent = (definition: GridItemDefinition) => {
+    if (definition.content.$ref === '#/spec/panels/newPanel') {
+      return (
+        <Card
+          sx={{
+            ...others.sx,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexFlow: 'column nowrap',
+          }}
+          variant="outlined"
+        >
+          New Panel
+        </Card>
+      );
+    }
+    return <GridItemContent content={definition.content} spec={spec} />;
+  };
+
   return (
     <Box {...others}>
       <ErrorBoundary FallbackComponent={ErrorAlert}>
-        {spec.layouts.map((layout, idx) => (
-          <GridLayout
-            key={idx}
-            definition={layout}
-            renderGridItemContent={(definition) => <GridItemContent content={definition.content} spec={spec} />}
-          />
+        {layouts.map((layout, idx) => (
+          <GridLayout key={idx} definition={layout} renderGridItemContent={renderGridItemContent} />
         ))}
       </ErrorBoundary>
     </Box>
