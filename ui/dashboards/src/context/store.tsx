@@ -1,6 +1,6 @@
 import create from 'zustand';
-import produce from 'immer';
 import type { StoreApi } from 'zustand';
+import produce from 'immer';
 import createZustandContext from 'zustand/context';
 import { DashboardSpec, LayoutDefinition, PanelDefinition } from '@perses-dev/core';
 
@@ -58,11 +58,10 @@ export function DashboardProvider(props: DashboardProviderProps) {
           setLayouts: (layouts: LayoutDefinition[]) => set({ layouts }),
           setPanels: (panels: Record<string, PanelDefinition>) => set({ panels }),
           addPanel: (name: string, panel: PanelDefinition) => {
-            // @ts-ignore
             set(
               produce((state: DashboardStoreState) => {
                 state.panels[name] = panel;
-              })
+              }, {})
             );
           },
         }))
